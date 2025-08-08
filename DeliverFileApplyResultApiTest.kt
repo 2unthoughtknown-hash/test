@@ -278,6 +278,31 @@ class DeliverFileApplyResultApiTest {
         coVerify(exactly = 1) { mockMsgwRepository.execCommand(MsgwRequestType.TERM_REQ, MsgwBusinessType.DELIVER_FILE_APPLY_RESULT, any()) }
     }
 
+    @Test
+    fun deliverFileApplyResult_response_status_not_start_with_1() = runTest {
+        createMockSuccess()
+        
+        // statusが4桁だが"1"から始まらないレスポンスを設定
+        val invalidStatusResponse = DeliverFileApplyResult.Response(status = "2000")
+        val invalidJsonString = jsonAdapter.toJson(invalidStatusResponse)
+        coEvery { mockMsgwRepository.execCommand(any(), any(), any()) } returns MsgwResult(
+            true,
+            msgwStatus = MsgwStatus.NORMAL,
+            jsonString = invalidJsonString
+        )
+
+        val result = deliverFileApplyResultApi.deliverFileApplyResult(status, errorReason, version, reserve)
+        Assert.assertTrue(result is ApiResult.Failure)
+        val failureResult = result as ApiResult.Failure
+        Assert.assertEquals(ApiErrorType.RESPONSE_ERROR, failureResult.errorType)
+        Assert.assertEquals("2000", failureResult.msgwErrorCode)
+
+        coVerify(exactly = 1) { mockMsgwRepository.connect() }
+        coVerify(exactly = 1) { mockMsgwRepository.disconnect() }
+        coVerify(exactly = 1) { mockMsgwRepository.authenticate() }
+        coVerify(exactly = 1) { mockMsgwRepository.execCommand(MsgwRequestType.TERM_REQ, MsgwBusinessType.DELIVER_FILE_APPLY_RESULT, any()) }
+    }
+
     private fun createMockSuccess() {
         coEvery { mockMsgwRepository.connect() } returns MsgwResult(true)
         coEvery { mockMsgwRepository.disconnect() } returns MsgwResult(true)
