@@ -43,3 +43,23 @@
         assertEquals("M-APUA01", result.errorCode)
         assertEquals("ネットワーク接続に失敗しました。", result.errorMessage)
     }
+
+    @Test
+    fun `testUpdateDeliverFileInfo Success`() = runTest {
+        every { mockService.updateDeliverFileInfo(any(), any(), any(), any(), any()) } returns COMMON_UNIT_SUCCESS
+
+        val result = sdk.updateDeliverFileInfo("InFW", "01.00.01", "/sdcard/update/firmware.bin", "1", "20241201120000")
+        assert(result is Result.Success)
+        assertEquals(Unit, (result as Result.Success).data)
+    }
+
+    @Test
+    fun `testUpdateDeliverFileInfo Failure`() = runTest {
+        every { mockService.updateDeliverFileInfo(any(), any(), any(), any(), any()) } returns COMMON_FAILURE_NETWORK
+
+        val result = sdk.updateDeliverFileInfo("InFW", "01.00.01", "/sdcard/update/firmware.bin", "2", "20241201120000")
+        assert(result is Result.Failure)
+        result as Result.Failure
+        assertEquals("M-APUA01", result.errorCode)
+        assertEquals("ネットワーク接続に失敗しました。", result.errorMessage)
+    }
